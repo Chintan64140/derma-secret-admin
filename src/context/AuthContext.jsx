@@ -5,7 +5,7 @@ const AuthContext = createContext();
 
 // Create custom API client with backend url
 export const API = axios.create({
-  baseURL: 'http://localhost:5000/api'
+  baseURL: 'https://derma-secret-backend.onrender.com/api'
 });
 
 export const AuthProvider = ({ children }) => {

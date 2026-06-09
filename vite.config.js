@@ -7,15 +7,15 @@ export default defineConfig({
   server: {
     proxy: {
       '/uploads': {
-        target: 'http://localhost:5000',
+        target: 'https://derma-secret-backend.onrender.com',
         changeOrigin: true,
       },
       '/assets': {
-        target: 'http://localhost:5000',
+        target: 'https://derma-secret-backend.onrender.com',
         changeOrigin: true,
       },
       '^/(file-|video-)': {
-        target: 'http://localhost:5000',
+        target: 'https://derma-secret-backend.onrender.com',
         changeOrigin: true,
       }
     }
