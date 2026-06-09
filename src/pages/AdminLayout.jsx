@@ -37,12 +37,7 @@ const AdminLayout = () => {
           >
             Go to Login
           </Link>
-          <a
-            href="http://localhost:5173"
-            className="px-5 py-2.5 bg-white dark:bg-zinc-800 border border-brand-border dark:border-zinc-700 text-brand-dark dark:text-gray-250 hover:bg-brand-bg-grey dark:hover:bg-zinc-750 rounded font-bold font-heading text-xs uppercase tracking-wider transition-all cursor-pointer"
-          >
-            Back to Store
-          </a>
+         
         </div>
       </div>
     );
@@ -153,12 +148,7 @@ const AdminLayout = () => {
 
         {/* Footer controls */}
         <div className="p-6 border-t border-white/5 space-y-4">
-          <a
-            href="http://localhost:5173"
-            className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-gray-300 hover:text-white transition-colors"
-          >
-            <ArrowLeft size={14} /> Back to Store
-          </a>
+         
           <button
             onClick={() => { logout(); navigate('/login'); }}
             className="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-brand-accent hover:text-red-400 transition-colors w-full text-left"

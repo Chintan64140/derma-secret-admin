@@ -137,12 +137,7 @@ const Login = () => {
                 Register Admin Account
               </button>
             </p>
-            <a 
-              href="http://localhost:5173" 
-              className="text-xs text-brand-grey dark:text-gray-400 hover:text-brand-dark dark:hover:text-white transition-colors"
-            >
-              ← Back to Storefront
-            </a>
+           
           </div>
         </div>
       </div>
