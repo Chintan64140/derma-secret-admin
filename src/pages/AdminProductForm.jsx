@@ -4,6 +4,98 @@ import { ArrowLeft, Save, Upload, AlertCircle, RefreshCw, Trash2, Eye } from 'lu
 import { API } from '../context/AuthContext';
 import { getImageUrl } from '../utils/image';
 
+const RichTextEditor = ({ value, onChange, placeholder }) => {
+  const editorRef = React.useRef(null);
+  const isEditingRef = React.useRef(false);
+
+  // Synchronize initial value or updates from outside when not focused/editing
+  React.useEffect(() => {
+    if (editorRef.current && editorRef.current.innerHTML !== value && !isEditingRef.current) {
+      editorRef.current.innerHTML = value || '';
+    }
+  }, [value]);
+
+  const handleInput = () => {
+    if (editorRef.current) {
+      onChange(editorRef.current.innerHTML);
+    }
+  };
+
+  const execCmd = (command, val = null) => {
+    document.execCommand(command, false, val);
+    handleInput();
+  };
+
+  return (
+    <div className="border border-brand-border dark:border-zinc-750 bg-white dark:bg-zinc-800 rounded-lg overflow-hidden shadow-2xs">
+      {/* Toolbar */}
+      <div className="flex flex-wrap items-center gap-1.5 p-2 bg-zinc-50 dark:bg-zinc-900 border-b border-brand-border dark:border-zinc-850">
+        <button
+          type="button"
+          onClick={() => execCmd('bold')}
+          className="p-1 px-2.5 rounded bg-white dark:bg-zinc-850 border border-brand-border dark:border-zinc-750 hover:bg-brand-blue-light/25 hover:text-brand-blue dark:hover:bg-brand-blue/10 dark:hover:text-brand-blue-light text-xs font-black text-brand-dark dark:text-zinc-200 transition-all cursor-pointer"
+          title="Bold"
+        >
+          B
+        </button>
+        <button
+          type="button"
+          onClick={() => execCmd('italic')}
+          className="p-1 px-2.5 rounded bg-white dark:bg-zinc-850 border border-brand-border dark:border-zinc-750 hover:bg-brand-blue-light/25 hover:text-brand-blue dark:hover:bg-brand-blue/10 dark:hover:text-brand-blue-light text-xs italic font-bold text-brand-dark dark:text-zinc-200 transition-all cursor-pointer"
+          title="Italic"
+        >
+          I
+        </button>
+        <button
+          type="button"
+          onClick={() => execCmd('underline')}
+          className="p-1 px-2.5 rounded bg-white dark:bg-zinc-850 border border-brand-border dark:border-zinc-750 hover:bg-brand-blue-light/25 hover:text-brand-blue dark:hover:bg-brand-blue/10 dark:hover:text-brand-blue-light text-xs underline font-bold text-brand-dark dark:text-zinc-200 transition-all cursor-pointer"
+          title="Underline"
+        >
+          U
+        </button>
+        <div className="h-5 w-[1px] bg-brand-border dark:bg-zinc-800 mx-1"></div>
+        <button
+          type="button"
+          onClick={() => execCmd('insertUnorderedList')}
+          className="p-1 px-2.5 rounded bg-white dark:bg-zinc-850 border border-brand-border dark:border-zinc-750 hover:bg-brand-blue-light/25 hover:text-brand-blue dark:hover:bg-brand-blue/10 dark:hover:text-brand-blue-light text-xs font-bold text-brand-dark dark:text-zinc-200 transition-all cursor-pointer"
+          title="Bullet List"
+        >
+          • Bullet List
+        </button>
+        <button
+          type="button"
+          onClick={() => execCmd('insertOrderedList')}
+          className="p-1 px-2.5 rounded bg-white dark:bg-zinc-850 border border-brand-border dark:border-zinc-750 hover:bg-brand-blue-light/25 hover:text-brand-blue dark:hover:bg-brand-blue/10 dark:hover:text-brand-blue-light text-xs font-bold text-brand-dark dark:text-zinc-200 transition-all cursor-pointer"
+          title="Numbered List"
+        >
+          1. Numbered List
+        </button>
+        <div className="h-5 w-[1px] bg-brand-border dark:bg-zinc-800 mx-1"></div>
+        <button
+          type="button"
+          onClick={() => execCmd('removeFormat')}
+          className="p-1 px-2.5 rounded bg-white dark:bg-zinc-850 border border-brand-border dark:border-zinc-750 hover:bg-red-50 dark:hover:bg-red-950/20 hover:text-brand-accent text-xs font-bold text-brand-dark dark:text-zinc-200 transition-all cursor-pointer"
+          title="Clear Format"
+        >
+          Clear
+        </button>
+      </div>
+      {/* Editor area */}
+      <div
+        ref={editorRef}
+        contentEditable
+        onInput={handleInput}
+        onFocus={() => { isEditingRef.current = true; }}
+        onBlur={() => { isEditingRef.current = false; }}
+        className="w-full min-h-[180px] p-3.5 text-xs bg-white dark:bg-zinc-800 text-brand-dark dark:text-zinc-200 focus:outline-none overflow-y-auto leading-relaxed"
+        placeholder={placeholder}
+        style={{ outline: 'none' }}
+      />
+    </div>
+  );
+};
+
 const AdminProductForm = () => {
   const { id } = useParams(); // Holds product ID if editing
   const navigate = useNavigate();
@@ -28,11 +120,47 @@ const AdminProductForm = () => {
   const [isNewArrival, setIsNewArrival] = useState(false);
   const [images, setImages] = useState([]);
   const [description, setDescription] = useState('');
-  const [howToUse, setHowToUse] = useState('');
-  const [ingredients, setIngredients] = useState('');
+  const [detailsDescription, setDetailsDescription] = useState('');
+  
+  // How to Use Steps Fields
+  const [howToUseSteps, setHowToUseSteps] = useState([]);
+  const [newStepNo, setNewStepNo] = useState('1');
+  const [newStepTitle, setNewStepTitle] = useState('');
+  const [newStepDetails, setNewStepDetails] = useState('');
+
+  // Ingredients Fields
+  const [ingredientsList, setIngredientsList] = useState([]);
+  const [newIngredient, setNewIngredient] = useState('');
+  
   const [metaTitle, setMetaTitle] = useState('');
   const [metaDescription, setMetaDescription] = useState('');
   const [metaKeywords, setMetaKeywords] = useState('');
+
+  // Key Active Ingredients States
+  const [keyActives, setKeyActives] = useState([]);
+  const [newActiveName, setNewActiveName] = useState('');
+  const [newActiveBenefit, setNewActiveBenefit] = useState('');
+
+  // Clinical FAQs States
+  const [faqs, setFaqs] = useState([]);
+  const [newFaqQuestion, setNewFaqQuestion] = useState('');
+  const [newFaqAnswer, setNewFaqAnswer] = useState('');
+
+  // Product Highlights States
+  const [highlights, setHighlights] = useState([]);
+  const [newHighlightTitle, setNewHighlightTitle] = useState('');
+  const [newHighlightDesc, setNewHighlightDesc] = useState('');
+
+  // Suitable For / Skin Concern Targets States
+  const [suitableFor, setSuitableFor] = useState([]);
+  const [newSuitableItem, setNewSuitableItem] = useState('');
+
+  // Combo Pack Contents States
+  const [comboItems, setComboItems] = useState([]);
+  const [newComboName, setNewComboName] = useState('');
+  const [newComboQty, setNewComboQty] = useState('');
+  const [newComboImage, setNewComboImage] = useState('');
+  const [uploadingCombo, setUploadingCombo] = useState(false);
 
   // Image Uploading States
   const [uploadingPrimary, setUploadingPrimary] = useState(false);
@@ -65,8 +193,33 @@ const AdminProductForm = () => {
           setIsNewArrival(!!product.is_new_arrival);
           setImages(product.images || []);
           setDescription(product.description || '');
-          setHowToUse(product.details?.how_to_use || '');
-          setIngredients(product.details?.ingredients || '');
+          setDetailsDescription(product.details?.description || product.description || '');
+
+          const rawHow = product.details?.how_to_use;
+          if (Array.isArray(rawHow)) {
+            setHowToUseSteps(rawHow);
+            setNewStepNo(String(rawHow.length + 1));
+          } else if (rawHow) {
+            setHowToUseSteps([{ no: '1', title: 'Directions', details: rawHow }]);
+            setNewStepNo('2');
+          } else {
+            setHowToUseSteps([]);
+            setNewStepNo('1');
+          }
+
+          const rawIngs = product.details?.ingredients;
+          if (Array.isArray(rawIngs)) {
+            setIngredientsList(rawIngs);
+          } else if (typeof rawIngs === 'string') {
+            setIngredientsList(rawIngs.split(/[;,]/).map(item => item.trim()).filter(Boolean));
+          } else {
+            setIngredientsList([]);
+          }
+          setKeyActives(product.details?.key_actives || []);
+          setFaqs(product.details?.faqs || []);
+          setHighlights(product.details?.highlights || []);
+          setSuitableFor(product.details?.suitable_for || []);
+          setComboItems(product.details?.combo_items || []);
           setMetaTitle(product.details?.meta_title || '');
           setMetaDescription(product.details?.meta_description || '');
           setMetaKeywords(product.details?.meta_keywords || '');
@@ -89,6 +242,7 @@ const AdminProductForm = () => {
     if (type === 'primary') setUploadingPrimary(true);
     else if (type === 'secondary') setUploadingSecondary(true);
     else if (type === 'gallery') setUploadingGallery(true);
+    else if (type === 'combo') setUploadingCombo(true);
 
     const formData = new FormData();
     formData.append('image', file);
@@ -103,6 +257,8 @@ const AdminProductForm = () => {
         setSecondaryImageUrl(uploadedUrl);
       } else if (type === 'gallery') {
         setImages(prev => [...prev, uploadedUrl]);
+      } else if (type === 'combo') {
+        setNewComboImage(uploadedUrl);
       } else {
         setImageUrl(uploadedUrl);
       }
@@ -113,6 +269,7 @@ const AdminProductForm = () => {
       setUploadingPrimary(false);
       setUploadingSecondary(false);
       setUploadingGallery(false);
+      setUploadingCombo(false);
     }
   };
 
@@ -141,8 +298,14 @@ const AdminProductForm = () => {
       is_new_arrival: isNewArrival,
       weight: weight.trim() || null,
       details: {
-        how_to_use: howToUse,
-        ingredients: ingredients,
+        description: detailsDescription,
+        how_to_use: howToUseSteps,
+        ingredients: ingredientsList,
+        key_actives: keyActives,
+        faqs: faqs,
+        highlights: highlights,
+        suitable_for: suitableFor,
+        combo_items: comboItems,
         meta_title: metaTitle,
         meta_description: metaDescription,
         meta_keywords: metaKeywords
@@ -464,7 +627,7 @@ const AdminProductForm = () => {
             </div>
           </div>
 
-          {/* Description */}
+          {/* Brief Description */}
           <div className="sm:col-span-2 border-t border-brand-border/40 dark:border-zinc-800 pt-6">
             <label className="block text-[10px] font-bold text-brand-grey dark:text-zinc-400 uppercase tracking-wider mb-1">Brief Description *</label>
             <textarea
@@ -477,28 +640,580 @@ const AdminProductForm = () => {
             ></textarea>
           </div>
 
-          {/* How to Use */}
+          {/* Product Details (Tab Content Rich Text) */}
           <div className="sm:col-span-2">
-            <label className="block text-[10px] font-bold text-brand-grey dark:text-zinc-400 uppercase tracking-wider mb-1">Directions for Use</label>
-            <textarea
-              rows="2"
-              value={howToUse}
-              onChange={(e) => setHowToUse(e.target.value)}
-              className="w-full px-3 py-2 border border-brand-border dark:border-zinc-750 bg-white dark:bg-zinc-800 text-brand-dark dark:text-white rounded text-xs focus:outline-none focus:border-brand-blue"
-              placeholder="Application details..."
-            ></textarea>
+            <label className="block text-[10px] font-bold text-brand-grey dark:text-zinc-400 uppercase tracking-wider mb-1">Product Details (Tab Content Rich Text)</label>
+            <RichTextEditor
+              value={detailsDescription}
+              onChange={setDetailsDescription}
+              placeholder="Detailed product information for tabs..."
+            />
           </div>
 
-          {/* Ingredients */}
-          <div className="sm:col-span-2">
-            <label className="block text-[10px] font-bold text-brand-grey dark:text-zinc-400 uppercase tracking-wider mb-1">Ingredients List</label>
-            <textarea
-              rows="2"
-              value={ingredients}
-              onChange={(e) => setIngredients(e.target.value)}
-              className="w-full px-3 py-2 border border-brand-border dark:border-zinc-750 bg-white dark:bg-zinc-800 text-brand-dark dark:text-white rounded text-xs focus:outline-none focus:border-brand-blue"
-              placeholder="Key chemicals, concentrations, or botanical extracts..."
-            ></textarea>
+          {/* How to Use (Steps List) */}
+          <div className="sm:col-span-2 border-t border-brand-border/40 dark:border-zinc-800 pt-6 space-y-4">
+            <div>
+              <label className="block text-[10px] font-bold text-brand-grey dark:text-zinc-400 uppercase tracking-wider">How to Use (Steps List)</label>
+              <span className="text-[10px] text-brand-grey dark:text-zinc-550 font-semibold uppercase tracking-wider font-heading block mt-0.5">
+                Define the steps for application (e.g. Step 1, Step 2, etc.) in a row layout
+              </span>
+            </div>
+
+            {/* Steps List */}
+            {howToUseSteps.length > 0 ? (
+              <div className="space-y-3 max-w-xl">
+                {howToUseSteps.map((step, idx) => (
+                  <div key={idx} className="flex items-start justify-between p-3 bg-[#f9fafb] dark:bg-zinc-850 border border-brand-border dark:border-zinc-800 rounded-lg text-xs font-medium shadow-2xs">
+                    <div className="flex gap-3 items-start">
+                      <span className="flex items-center justify-center w-6 h-6 rounded-full bg-brand-blue/10 dark:bg-brand-blue/20 text-brand-blue dark:text-brand-blue-light font-black text-xs shrink-0">
+                        {step.no}
+                      </span>
+                      <div className="space-y-1">
+                        <h5 className="font-bold text-brand-dark dark:text-white uppercase tracking-wide">{step.title}</h5>
+                        <p className="text-[11px] text-brand-grey dark:text-zinc-400 font-medium leading-relaxed">{step.details}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setHowToUseSteps(prev => prev.filter((_, i) => i !== idx))}
+                      className="p-1.5 text-brand-accent hover:bg-red-50 dark:hover:bg-red-950/20 rounded transition-colors shrink-0 cursor-pointer"
+                      title="Delete Step"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[10px] text-brand-grey dark:text-zinc-555 font-semibold italic">No steps added yet.</p>
+            )}
+
+            {/* Inputs to Add Step */}
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end max-w-xl bg-zinc-50/50 dark:bg-zinc-950/20 p-4 border border-brand-border dark:border-zinc-800 rounded-xl">
+              <div className="sm:col-span-3">
+                <label className="block text-[9px] font-bold text-brand-grey dark:text-zinc-550 uppercase mb-1">Step No.</label>
+                <input
+                  type="text"
+                  value={newStepNo}
+                  onChange={(e) => setNewStepNo(e.target.value)}
+                  className="w-full px-3 py-1.5 border border-brand-border dark:border-zinc-750 bg-white dark:bg-zinc-800 text-brand-dark dark:text-white rounded text-xs focus:outline-none focus:border-brand-blue"
+                  placeholder="e.g. 1"
+                />
+              </div>
+              <div className="sm:col-span-9">
+                <label className="block text-[9px] font-bold text-brand-grey dark:text-zinc-550 uppercase mb-1">Step Title</label>
+                <input
+                  type="text"
+                  value={newStepTitle}
+                  onChange={(e) => setNewStepTitle(e.target.value)}
+                  className="w-full px-3 py-1.5 border border-brand-border dark:border-zinc-750 bg-white dark:bg-zinc-800 text-brand-dark dark:text-white rounded text-xs focus:outline-none focus:border-brand-blue"
+                  placeholder="e.g. Cleanse your skin"
+                />
+              </div>
+              <div className="sm:col-span-12">
+                <label className="block text-[9px] font-bold text-brand-grey dark:text-zinc-550 uppercase mb-1">Step Details</label>
+                <textarea
+                  rows="2"
+                  value={newStepDetails}
+                  onChange={(e) => setNewStepDetails(e.target.value)}
+                  className="w-full px-3 py-1.5 border border-brand-border dark:border-zinc-750 bg-white dark:bg-zinc-800 text-brand-dark dark:text-white rounded text-xs focus:outline-none focus:border-brand-blue"
+                  placeholder="e.g. Wet face and apply a small pump of cleanser..."
+                />
+              </div>
+              <div className="sm:col-span-12 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (newStepNo.trim() && newStepTitle.trim() && newStepDetails.trim()) {
+                      setHowToUseSteps(prev => [...prev, {
+                        no: newStepNo.trim(),
+                        title: newStepTitle.trim(),
+                        details: newStepDetails.trim()
+                      }]);
+                      setNewStepNo((prev) => {
+                        const parsed = parseInt(prev);
+                        return isNaN(parsed) ? '' : String(parsed + 1);
+                      });
+                      setNewStepTitle('');
+                      setNewStepDetails('');
+                    }
+                  }}
+                  className="px-5 py-1.5 bg-brand-blue hover:bg-brand-blue-dark text-white rounded font-bold text-xs cursor-pointer transition-colors"
+                >
+                  Add Step
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Ingredients List Builder */}
+          <div className="sm:col-span-2 border-t border-brand-border/40 dark:border-zinc-800 pt-6 space-y-4">
+            <div>
+              <label className="block text-[10px] font-bold text-brand-grey dark:text-zinc-400 uppercase tracking-wider">Ingredients List</label>
+              <span className="text-[10px] text-brand-grey dark:text-zinc-550 font-semibold uppercase tracking-wider font-heading block mt-0.5">
+                Add formulation ingredients one by one (e.g. Aqua, Glycerine, Niacinamide) or paste a comma-separated list
+              </span>
+            </div>
+
+            {/* Ingredients Pills Grid */}
+            {ingredientsList.length > 0 ? (
+              <div className="flex flex-wrap gap-2 p-3 border border-brand-border dark:border-zinc-800 rounded bg-[#f9fafb]/45 dark:bg-zinc-950/10">
+                {ingredientsList.map((ing, idx) => (
+                  <span 
+                    key={idx} 
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-zinc-50 dark:bg-zinc-850 text-brand-dark dark:text-zinc-200 rounded text-xs font-semibold border border-brand-border dark:border-zinc-800 shadow-2xs group hover:border-brand-accent transition-all"
+                  >
+                    <span>{ing}</span>
+                    <button
+                      type="button"
+                      onClick={() => setIngredientsList(prev => prev.filter((_, i) => i !== idx))}
+                      className="text-brand-grey group-hover:text-brand-accent dark:text-zinc-500 font-bold text-[11px] focus:outline-none cursor-pointer"
+                      title="Remove ingredient"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[10px] text-brand-grey dark:text-zinc-550 font-semibold italic">No ingredients added yet.</p>
+            )}
+
+            {/* Input to Add Ingredient */}
+            <div className="flex gap-2 max-w-md">
+              <input
+                type="text"
+                value={newIngredient}
+                onChange={(e) => setNewIngredient(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (newIngredient.trim()) {
+                      const items = newIngredient.split(/[;,]/).map(item => item.trim()).filter(Boolean);
+                      setIngredientsList(prev => [...prev, ...items]);
+                      setNewIngredient('');
+                    }
+                  }
+                }}
+                className="flex-1 px-3 py-1.5 border border-brand-border dark:border-zinc-750 bg-white dark:bg-zinc-800 text-brand-dark dark:text-white rounded text-xs focus:outline-none focus:border-brand-blue"
+                placeholder="Type name and press Enter or click '+'"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (newIngredient.trim()) {
+                    const items = newIngredient.split(/[;,]/).map(item => item.trim()).filter(Boolean);
+                    setIngredientsList(prev => [...prev, ...items]);
+                    setNewIngredient('');
+                  }
+                }}
+                className="px-3 bg-brand-blue hover:bg-brand-blue-dark text-white rounded font-bold text-xs cursor-pointer transition-colors"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          {/* Key Active Ingredients */}
+          <div className="sm:col-span-2 border-t border-brand-border/40 dark:border-zinc-800 pt-6 space-y-4">
+            <div>
+              <label className="block text-[10px] font-bold text-brand-grey dark:text-zinc-400 uppercase tracking-wider">Key Active Ingredients</label>
+              <span className="text-[10px] text-brand-grey dark:text-zinc-500 font-semibold uppercase tracking-wider font-heading block mt-0.5">
+                Add active ingredients and their corresponding benefits (e.g. Niacinamide &rarr; Calms and soothes skin)
+              </span>
+            </div>
+
+            {/* Key Actives List */}
+            {keyActives.length > 0 ? (
+              <div className="space-y-2 max-w-xl">
+                {keyActives.map((act, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-2.5 bg-[#f9fafb] dark:bg-zinc-850 border border-brand-border dark:border-zinc-800 rounded-lg text-xs font-medium">
+                    <div className="space-y-0.5">
+                      <span className="font-bold text-brand-dark dark:text-white">{act.name}</span>
+                      <p className="text-[11px] text-brand-grey dark:text-zinc-400 font-medium">{act.benefit}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setKeyActives(prev => prev.filter((_, i) => i !== idx))}
+                      className="p-1.5 text-brand-accent hover:bg-red-50 dark:hover:bg-red-950/20 rounded transition-colors"
+                      title="Delete ingredient"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[10px] text-brand-grey dark:text-zinc-500 font-semibold italic">No key active ingredients defined. (Storefront fallbacks will be used if left empty).</p>
+            )}
+
+            {/* Inputs to Add Key Active */}
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end max-w-xl">
+              <div className="sm:col-span-5">
+                <label className="block text-[9px] font-bold text-brand-grey dark:text-zinc-550 uppercase mb-1">Active Name</label>
+                <input
+                  type="text"
+                  value={newActiveName}
+                  onChange={(e) => setNewActiveName(e.target.value)}
+                  className="w-full px-3 py-1.5 border border-brand-border dark:border-zinc-750 bg-white dark:bg-zinc-800 text-brand-dark dark:text-white rounded text-xs focus:outline-none focus:border-brand-blue"
+                  placeholder="e.g. Niacinamide"
+                />
+              </div>
+              <div className="sm:col-span-5">
+                <label className="block text-[9px] font-bold text-brand-grey dark:text-zinc-550 uppercase mb-1">Clinical Benefit</label>
+                <input
+                  type="text"
+                  value={newActiveBenefit}
+                  onChange={(e) => setNewActiveBenefit(e.target.value)}
+                  className="w-full px-3 py-1.5 border border-brand-border dark:border-zinc-750 bg-white dark:bg-zinc-800 text-brand-dark dark:text-white rounded text-xs focus:outline-none focus:border-brand-blue"
+                  placeholder="e.g. Calms and soothes skin"
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (newActiveName.trim() && newActiveBenefit.trim()) {
+                      setKeyActives(prev => [...prev, { name: newActiveName.trim(), benefit: newActiveBenefit.trim() }]);
+                      setNewActiveName('');
+                      setNewActiveBenefit('');
+                    }
+                  }}
+                  className="w-full py-1.5 bg-brand-blue hover:bg-brand-blue-dark text-white rounded font-bold text-xs cursor-pointer transition-colors"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Product Highlights / Benefits */}
+          <div className="sm:col-span-2 border-t border-brand-border/40 dark:border-zinc-800 pt-6 space-y-4">
+            <div>
+              <label className="block text-[10px] font-bold text-brand-grey dark:text-zinc-400 uppercase tracking-wider">Product Highlights / Benefits</label>
+              <span className="text-[10px] text-brand-grey dark:text-zinc-500 font-semibold uppercase tracking-wider font-heading block mt-0.5">
+                Add custom product benefits (Title & Description) to override default category highlights
+              </span>
+            </div>
+
+            {/* Highlights List */}
+            {highlights.length > 0 ? (
+              <div className="space-y-2 max-w-xl">
+                {highlights.map((hl, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-2.5 bg-[#f9fafb] dark:bg-zinc-850 border border-brand-border dark:border-zinc-800 rounded-lg text-xs font-medium">
+                    <div className="space-y-0.5">
+                      <span className="font-bold text-brand-dark dark:text-white">{hl.title}</span>
+                      <p className="text-[11px] text-brand-grey dark:text-zinc-400 font-medium">{hl.desc}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setHighlights(prev => prev.filter((_, i) => i !== idx))}
+                      className="p-1.5 text-brand-accent hover:bg-red-50 dark:hover:bg-red-950/20 rounded transition-colors"
+                      title="Delete highlight"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[10px] text-brand-grey dark:text-zinc-500 font-semibold italic">No custom highlights defined. (Default category-based highlights will be used).</p>
+            )}
+
+            {/* Inputs to Add Highlight */}
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end max-w-xl">
+              <div className="sm:col-span-5">
+                <label className="block text-[9px] font-bold text-brand-grey dark:text-zinc-550 uppercase mb-1">Highlight Title</label>
+                <input
+                  type="text"
+                  value={newHighlightTitle}
+                  onChange={(e) => setNewHighlightTitle(e.target.value)}
+                  className="w-full px-3 py-1.5 border border-brand-border dark:border-zinc-750 bg-white dark:bg-zinc-800 text-brand-dark dark:text-white rounded text-xs focus:outline-none focus:border-brand-blue"
+                  placeholder="e.g. Cleanses Gently"
+                />
+              </div>
+              <div className="sm:col-span-5">
+                <label className="block text-[9px] font-bold text-brand-grey dark:text-zinc-550 uppercase mb-1">Description</label>
+                <input
+                  type="text"
+                  value={newHighlightDesc}
+                  onChange={(e) => setNewHighlightDesc(e.target.value)}
+                  className="w-full px-3 py-1.5 border border-brand-border dark:border-zinc-750 bg-white dark:bg-zinc-800 text-brand-dark dark:text-white rounded text-xs focus:outline-none focus:border-brand-blue"
+                  placeholder="e.g. Removes impurities..."
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (newHighlightTitle.trim() && newHighlightDesc.trim()) {
+                      setHighlights(prev => [...prev, { title: newHighlightTitle.trim(), desc: newHighlightDesc.trim() }]);
+                      setNewHighlightTitle('');
+                      setNewHighlightDesc('');
+                    }
+                  }}
+                  className="w-full py-1.5 bg-brand-blue hover:bg-brand-blue-dark text-white rounded font-bold text-xs cursor-pointer transition-colors"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Suitable For (Skin Concerns & Targets) */}
+          <div className="sm:col-span-2 border-t border-brand-border/40 dark:border-zinc-800 pt-6 space-y-4">
+            <div>
+              <label className="block text-[10px] font-bold text-brand-grey dark:text-zinc-400 uppercase tracking-wider">Suitable For List</label>
+              <span className="text-[10px] text-brand-grey dark:text-zinc-550 font-semibold uppercase tracking-wider font-heading block mt-0.5">
+                Add skin concern targets or suitable demographics (e.g. Uneven skin tone & dark patches)
+              </span>
+            </div>
+
+            {/* Suitable For List */}
+            {suitableFor.length > 0 ? (
+              <div className="flex flex-wrap gap-2 p-3 border border-brand-border dark:border-zinc-800 rounded bg-[#f9fafb]/45 dark:bg-zinc-950/10">
+                {suitableFor.map((item, idx) => (
+                  <span 
+                    key={idx} 
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-zinc-50 dark:bg-zinc-850 text-brand-dark dark:text-zinc-200 rounded text-xs font-semibold border border-brand-border dark:border-zinc-800 shadow-2xs group hover:border-brand-accent transition-all"
+                  >
+                    <span>{item}</span>
+                    <button
+                      type="button"
+                      onClick={() => setSuitableFor(prev => prev.filter((_, i) => i !== idx))}
+                      className="text-brand-grey group-hover:text-brand-accent dark:text-zinc-500 font-bold text-[11px] focus:outline-none cursor-pointer"
+                      title="Remove concern target"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[10px] text-brand-grey dark:text-zinc-550 font-semibold italic">No target demographics specified. (Default category-based targets will be used).</p>
+            )}
+
+            {/* Input to Add Suitable For */}
+            <div className="flex gap-2 max-w-md">
+              <input
+                type="text"
+                value={newSuitableItem}
+                onChange={(e) => setNewSuitableItem(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    if (newSuitableItem.trim()) {
+                      setSuitableFor(prev => [...prev, newSuitableItem.trim()]);
+                      setNewSuitableItem('');
+                    }
+                  }
+                }}
+                className="flex-1 px-3 py-1.5 border border-brand-border dark:border-zinc-750 bg-white dark:bg-zinc-800 text-brand-dark dark:text-white rounded text-xs focus:outline-none focus:border-brand-blue"
+                placeholder="e.g. Dry, itchy & sensitive scalp"
+              />
+              <button
+                type="button"
+                onClick={() => {
+                  if (newSuitableItem.trim()) {
+                    setSuitableFor(prev => [...prev, newSuitableItem.trim()]);
+                    setNewSuitableItem('');
+                  }
+                }}
+                className="px-3 bg-brand-blue hover:bg-brand-blue-dark text-white rounded font-bold text-xs cursor-pointer transition-colors"
+              >
+                +
+              </button>
+            </div>
+          </div>
+
+          {/* Clinical FAQs */}
+          <div className="sm:col-span-2 border-t border-brand-border/40 dark:border-zinc-800 pt-6 space-y-4">
+            <div>
+              <label className="block text-[10px] font-bold text-brand-grey dark:text-zinc-400 uppercase tracking-wider">Clinical FAQs (Dermat Review)</label>
+              <span className="text-[10px] text-brand-grey dark:text-zinc-500 font-semibold uppercase tracking-wider font-heading block mt-0.5">
+                Add frequently asked questions and their corresponding clinical answers
+              </span>
+            </div>
+
+            {/* FAQs List */}
+            {faqs.length > 0 ? (
+              <div className="space-y-2 max-w-xl">
+                {faqs.map((faq, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-2.5 bg-[#f9fafb] dark:bg-zinc-850 border border-brand-border dark:border-zinc-800 rounded-lg text-xs font-medium">
+                    <div className="space-y-0.5">
+                      <span className="font-bold text-brand-dark dark:text-white">Q: {faq.question}</span>
+                      <p className="text-[11px] text-brand-grey dark:text-zinc-400 font-medium">A: {faq.answer}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setFaqs(prev => prev.filter((_, i) => i !== idx))}
+                      className="p-1.5 text-brand-accent hover:bg-red-50 dark:hover:bg-red-950/20 rounded transition-colors"
+                      title="Delete FAQ"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[10px] text-brand-grey dark:text-zinc-500 font-semibold italic">No FAQs defined.</p>
+            )}
+
+            {/* Inputs to Add FAQ */}
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end max-w-xl">
+              <div className="sm:col-span-5">
+                <label className="block text-[9px] font-bold text-brand-grey dark:text-zinc-550 uppercase mb-1">Question</label>
+                <input
+                  type="text"
+                  value={newFaqQuestion}
+                  onChange={(e) => setNewFaqQuestion(e.target.value)}
+                  className="w-full px-3 py-1.5 border border-brand-border dark:border-zinc-750 bg-white dark:bg-zinc-800 text-brand-dark dark:text-white rounded text-xs focus:outline-none focus:border-brand-blue"
+                  placeholder="e.g. Does it leave a white cast?"
+                />
+              </div>
+              <div className="sm:col-span-5">
+                <label className="block text-[9px] font-bold text-brand-grey dark:text-zinc-550 uppercase mb-1">Clinical Answer</label>
+                <input
+                  type="text"
+                  value={newFaqAnswer}
+                  onChange={(e) => setNewFaqAnswer(e.target.value)}
+                  className="w-full px-3 py-1.5 border border-brand-border dark:border-zinc-750 bg-white dark:bg-zinc-800 text-brand-dark dark:text-white rounded text-xs focus:outline-none focus:border-brand-blue"
+                  placeholder="e.g. No, it is translucent..."
+                />
+              </div>
+              <div className="sm:col-span-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (newFaqQuestion.trim() && newFaqAnswer.trim()) {
+                      setFaqs(prev => [...prev, { question: newFaqQuestion.trim(), answer: newFaqAnswer.trim() }]);
+                      setNewFaqQuestion('');
+                      setNewFaqAnswer('');
+                    }
+                  }}
+                  className="w-full py-1.5 bg-brand-blue hover:bg-brand-blue-dark text-white rounded font-bold text-xs cursor-pointer transition-colors"
+                >
+                  Add
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Combo Pack Contents */}
+          <div className="sm:col-span-2 border-t border-brand-border/40 dark:border-zinc-800 pt-6 space-y-4">
+            <div>
+              <label className="block text-[10px] font-bold text-brand-grey dark:text-zinc-400 uppercase tracking-wider">Combo Pack Contents</label>
+              <span className="text-[10px] text-brand-grey dark:text-zinc-500 font-semibold uppercase tracking-wider font-heading block mt-0.5">
+                If this product is a bundle or combo pack, define its contents (Item Name, Quantity/Size, and Image)
+              </span>
+            </div>
+
+            {/* Combo Items List */}
+            {comboItems.length > 0 ? (
+              <div className="space-y-3 max-w-xl">
+                {comboItems.map((item, idx) => (
+                  <div key={idx} className="flex items-center justify-between p-2.5 bg-[#f9fafb] dark:bg-zinc-850 border border-brand-border dark:border-zinc-800 rounded-lg text-xs font-medium">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded border border-brand-border dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center p-1 overflow-hidden shrink-0">
+                        {item.image_url ? (
+                          <img 
+                            src={getImageUrl(item.image_url)} 
+                            alt="" 
+                            className="max-h-full max-w-full object-contain rounded"
+                            onError={(e) => { e.target.src = '/assets/products/placeholder.png'; }}
+                          />
+                        ) : (
+                          <span className="text-[8px] text-brand-grey">No Image</span>
+                        )}
+                      </div>
+                      <div className="space-y-0.5">
+                        <span className="font-bold text-brand-dark dark:text-white uppercase">{item.name}</span>
+                        <p className="text-[11px] text-brand-grey dark:text-zinc-400 font-medium">Quantity/Size: {item.qty}</p>
+                      </div>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setComboItems(prev => prev.filter((_, i) => i !== idx))}
+                      className="p-1.5 text-brand-accent hover:bg-red-50 dark:hover:bg-red-950/20 rounded transition-colors"
+                      title="Delete combo item"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-[10px] text-brand-grey dark:text-zinc-500 font-semibold italic">No combo pack items defined.</p>
+            )}
+
+            {/* Inputs to Add Combo Item */}
+            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end max-w-xl">
+              <div className="sm:col-span-5">
+                <label className="block text-[9px] font-bold text-brand-grey dark:text-zinc-550 uppercase mb-1">Item Name</label>
+                <input
+                  type="text"
+                  value={newComboName}
+                  onChange={(e) => setNewComboName(e.target.value)}
+                  className="w-full px-3 py-1.5 border border-brand-border dark:border-zinc-750 bg-white dark:bg-zinc-800 text-brand-dark dark:text-white rounded text-xs focus:outline-none focus:border-brand-blue"
+                  placeholder="e.g. Bye Bye Pigmentation Face Wash"
+                />
+              </div>
+              <div className="sm:col-span-3">
+                <label className="block text-[9px] font-bold text-brand-grey dark:text-zinc-550 uppercase mb-1">Qty / Size</label>
+                <input
+                  type="text"
+                  value={newComboQty}
+                  onChange={(e) => setNewComboQty(e.target.value)}
+                  className="w-full px-3 py-1.5 border border-brand-border dark:border-zinc-750 bg-white dark:bg-zinc-800 text-brand-dark dark:text-white rounded text-xs focus:outline-none focus:border-brand-blue"
+                  placeholder="e.g. 70g or 1 Unit"
+                />
+              </div>
+              <div className="sm:col-span-4">
+                <label className="block text-[9px] font-bold text-brand-grey dark:text-zinc-550 uppercase mb-1">Image URL</label>
+                <div className="flex gap-1.5">
+                  <input
+                    type="text"
+                    value={newComboImage}
+                    onChange={(e) => setNewComboImage(e.target.value)}
+                    className="flex-1 px-3 py-1.5 border border-brand-border dark:border-zinc-750 bg-white dark:bg-zinc-800 text-brand-dark dark:text-white rounded text-xs focus:outline-none focus:border-brand-blue"
+                    placeholder="Image URL or upload"
+                  />
+                  <label className="cursor-pointer shrink-0 flex items-center justify-center p-1.5 bg-brand-bg-grey dark:bg-zinc-800 hover:bg-brand-blue-light hover:text-brand-blue border border-brand-border dark:border-zinc-700 rounded text-xs transition-all text-brand-dark dark:text-zinc-200">
+                    {uploadingCombo ? <RefreshCw className="animate-spin" size={14} /> : <Upload size={14} />}
+                    <input
+                      type="file"
+                      accept="image/*"
+                      onChange={(e) => {
+                        handleImageUpload(e, 'combo');
+                        e.target.value = null;
+                      }}
+                      className="hidden"
+                      disabled={uploadingCombo}
+                    />
+                  </label>
+                </div>
+              </div>
+              <div className="sm:col-span-12 flex justify-end">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (newComboName.trim() && newComboQty.trim()) {
+                      setComboItems(prev => [...prev, {
+                        name: newComboName.trim(),
+                        qty: newComboQty.trim(),
+                        image_url: newComboImage.trim()
+                      }]);
+                      setNewComboName('');
+                      setNewComboQty('');
+                      setNewComboImage('');
+                    }
+                  }}
+                  className="px-6 py-1.5 bg-brand-blue hover:bg-brand-blue-dark text-white rounded font-bold text-xs cursor-pointer transition-colors"
+                >
+                  Add Combo Item
+                </button>
+              </div>
+            </div>
           </div>
 
           {/* SEO & Metadata section */}
