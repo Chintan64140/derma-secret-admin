@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ShoppingBag, ClipboardList, Users, ShieldAlert, ArrowLeft, LogOut, Sun, Moon, Sliders, Tag, RefreshCw, MessageSquare } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, ClipboardList, Users, ShieldAlert, ArrowLeft, LogOut, Sun, Moon, Sliders, Tag, RefreshCw, MessageSquare, Sparkles, Image } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -90,6 +90,17 @@ const AdminLayout = () => {
             </Link>
 
             <Link
+              to="/concerns"
+              className={`flex items-center gap-3 px-4 py-3 rounded text-xs font-bold uppercase tracking-wider font-heading transition-all ${
+                isActive('/concerns') 
+                  ? 'bg-brand-blue text-white shadow-md' 
+                  : 'text-gray-300 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              <Sparkles size={16} /> Concerns Catalog
+            </Link>
+
+            <Link
               to="/orders"
               className={`flex items-center gap-3 px-4 py-3 rounded text-xs font-bold uppercase tracking-wider font-heading transition-all ${
                 isActive('/orders') 
@@ -143,6 +154,17 @@ const AdminLayout = () => {
             >
               <MessageSquare size={16} /> Support Chat
             </Link>
+
+            <Link
+              to="/cms"
+              className={`flex items-center gap-3 px-4 py-3 rounded text-xs font-bold uppercase tracking-wider font-heading transition-all ${
+                isActive('/cms') 
+                  ? 'bg-brand-blue text-white shadow-md' 
+                  : 'text-gray-300 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              <Image size={16} /> Hero Banner CMS
+            </Link>
           </nav>
         </div>
 
@@ -186,12 +208,14 @@ const AdminLayout = () => {
               <Link to="/" className="text-brand-dark hover:text-brand-blue p-1.5 dark:text-zinc-300 dark:hover:text-white"><LayoutDashboard size={18} /></Link>
               <Link to="/products" className="text-brand-dark hover:text-brand-blue p-1.5 dark:text-zinc-300 dark:hover:text-white"><ShoppingBag size={18} /></Link>
               <Link to="/categories" className="text-brand-dark hover:text-brand-blue p-1.5 dark:text-zinc-300 dark:hover:text-white" title="Categories"><Sliders size={18} /></Link>
+              <Link to="/concerns" className="text-brand-dark hover:text-brand-blue p-1.5 dark:text-zinc-300 dark:hover:text-white" title="Concerns"><Sparkles size={18} /></Link>
               <Link to="/orders" className="text-brand-dark hover:text-brand-blue p-1.5 dark:text-zinc-300 dark:hover:text-white"><ClipboardList size={18} /></Link>
               <Link to="/returns" className="text-brand-dark hover:text-brand-blue p-1.5 dark:text-zinc-300 dark:hover:text-white" title="Returns"><RefreshCw size={18} /></Link>
               <Link to="/users" className="text-brand-dark hover:text-brand-blue p-1.5 dark:text-zinc-300 dark:hover:text-white"><Users size={18} /></Link>
               <Link to="/coupons" className="text-brand-dark hover:text-brand-blue p-1.5 dark:text-zinc-300 dark:hover:text-white" title="Coupons"><Tag size={18} /></Link>
               <Link to="/support" className="text-brand-dark hover:text-brand-blue p-1.5 dark:text-zinc-300 dark:hover:text-white" title="Support Chat"><MessageSquare size={18} /></Link>
-
+              <Link to="/cms" className="text-brand-dark hover:text-brand-blue p-1.5 dark:text-zinc-300 dark:hover:text-white" title="Hero Banner CMS"><Image size={18} /></Link>
+ 
               <button onClick={() => logout()} className="text-brand-accent p-1.5"><LogOut size={18} /></button>
             </div>
           </div>

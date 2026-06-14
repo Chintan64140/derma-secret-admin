@@ -10,8 +10,10 @@ import AdminOrders from './pages/AdminOrders';
 import AdminReturns from './pages/AdminReturns';
 import AdminUsers from './pages/AdminUsers';
 import AdminCategories from './pages/AdminCategories';
+import AdminConcerns from './pages/AdminConcerns';
 import AdminCoupons from './pages/AdminCoupons';
 import AdminSupport from './pages/AdminSupport';
+import AdminCMS from './pages/AdminCMS';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
@@ -32,11 +34,13 @@ function App() {
               <Route path="products/create" element={<AdminProductForm />} />
               <Route path="products/edit/:id" element={<AdminProductForm />} />
               <Route path="categories" element={<AdminCategories />} />
+              <Route path="concerns" element={<AdminConcerns />} />
               <Route path="orders" element={<AdminOrders />} />
               <Route path="returns" element={<AdminReturns />} />
               <Route path="users" element={<AdminUsers />} />
               <Route path="coupons" element={<AdminCoupons />} />
               <Route path="support" element={<AdminSupport />} />
+              <Route path="cms" element={<AdminCMS />} />
             </Route>
 
             {/* Fallback Catch-all redirection */}
