@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ShoppingBag, ClipboardList, Users, ShieldAlert, ArrowLeft, LogOut, Sun, Moon, Sliders, Tag, RefreshCw, MessageSquare, Sparkles, Image } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, ClipboardList, Users, ShieldAlert, ArrowLeft, LogOut, Sun, Moon, Sliders, Tag, RefreshCw, MessageSquare, Sparkles, Image, Truck } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -165,6 +165,17 @@ const AdminLayout = () => {
             >
               <Image size={16} /> Hero Banner CMS
             </Link>
+
+            <Link
+              to="/shipping"
+              className={`flex items-center gap-3 px-4 py-3 rounded text-xs font-bold uppercase tracking-wider font-heading transition-all ${
+                isActive('/shipping') 
+                  ? 'bg-brand-blue text-white shadow-md' 
+                  : 'text-gray-300 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              <Truck size={16} /> Shipping Settings
+            </Link>
           </nav>
         </div>
 
@@ -215,6 +226,7 @@ const AdminLayout = () => {
               <Link to="/coupons" className="text-brand-dark hover:text-brand-blue p-1.5 dark:text-zinc-300 dark:hover:text-white" title="Coupons"><Tag size={18} /></Link>
               <Link to="/support" className="text-brand-dark hover:text-brand-blue p-1.5 dark:text-zinc-300 dark:hover:text-white" title="Support Chat"><MessageSquare size={18} /></Link>
               <Link to="/cms" className="text-brand-dark hover:text-brand-blue p-1.5 dark:text-zinc-300 dark:hover:text-white" title="Hero Banner CMS"><Image size={18} /></Link>
+              <Link to="/shipping" className="text-brand-dark hover:text-brand-blue p-1.5 dark:text-zinc-300 dark:hover:text-white" title="Shipping Settings"><Truck size={18} /></Link>
  
               <button onClick={() => logout()} className="text-brand-accent p-1.5"><LogOut size={18} /></button>
             </div>

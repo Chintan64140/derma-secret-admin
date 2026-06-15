@@ -14,6 +14,7 @@ import AdminConcerns from './pages/AdminConcerns';
 import AdminCoupons from './pages/AdminCoupons';
 import AdminSupport from './pages/AdminSupport';
 import AdminCMS from './pages/AdminCMS';
+import AdminShipping from './pages/AdminShipping';
 import Login from './pages/Login';
 import Register from './pages/Register';
 
@@ -41,6 +42,7 @@ function App() {
               <Route path="coupons" element={<AdminCoupons />} />
               <Route path="support" element={<AdminSupport />} />
               <Route path="cms" element={<AdminCMS />} />
+              <Route path="shipping" element={<AdminShipping />} />
             </Route>
 
             {/* Fallback Catch-all redirection */}

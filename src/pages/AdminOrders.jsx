@@ -407,6 +407,16 @@ const AdminOrders = () => {
                                       <span className="font-bold">-₹{parseFloat(order.discount_amount).toLocaleString()}</span>
                                     </div>
                                   )}
+                                  {(() => {
+                                    const rawShipping = (parseFloat(order.net_price) || 0) - ((parseFloat(order.total_price) || 0) - (parseFloat(order.discount_amount) || 0));
+                                    const shippingCharged = Math.max(0, rawShipping);
+                                    return shippingCharged > 0 ? (
+                                      <div className="flex justify-between text-brand-blue dark:text-brand-blue-light">
+                                        <span>Shipping & Handling:</span>
+                                        <span className="font-bold">₹{shippingCharged.toLocaleString()}</span>
+                                      </div>
+                                    ) : null;
+                                  })()}
                                   <div className="flex justify-between">
                                     <span className="text-brand-grey dark:text-zinc-400">Gateway:</span>
                                     <span className="font-bold uppercase text-[10px] tracking-wider">{order.payment_method}</span>
