@@ -11,6 +11,7 @@ import AdminReturns from './pages/AdminReturns';
 import AdminUsers from './pages/AdminUsers';
 import AdminCategories from './pages/AdminCategories';
 import AdminConcerns from './pages/AdminConcerns';
+import AdminCombos from './pages/AdminCombos';
 import AdminCoupons from './pages/AdminCoupons';
 import AdminSupport from './pages/AdminSupport';
 import AdminCMS from './pages/AdminCMS';
@@ -36,6 +37,7 @@ function App() {
               <Route path="products/edit/:id" element={<AdminProductForm />} />
               <Route path="categories" element={<AdminCategories />} />
               <Route path="concerns" element={<AdminConcerns />} />
+              <Route path="combos" element={<AdminCombos />} />
               <Route path="orders" element={<AdminOrders />} />
               <Route path="returns" element={<AdminReturns />} />
               <Route path="users" element={<AdminUsers />} />

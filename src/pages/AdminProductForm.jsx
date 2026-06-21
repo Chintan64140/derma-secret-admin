@@ -103,6 +103,8 @@ const AdminProductForm = () => {
 
   // Component States
   const [categories, setCategories] = useState([]);
+  const [concerns, setConcerns] = useState([]);
+  const [combos, setCombos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [formError, setFormError] = useState('');
   const [formSubmitting, setFormSubmitting] = useState(false);
@@ -112,7 +114,9 @@ const AdminProductForm = () => {
   const [sku, setSku] = useState('');
   const [price, setPrice] = useState('');
   const [comparePrice, setComparePrice] = useState('');
-  const [categoryId, setCategoryId] = useState('');
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState([]);
+  const [selectedConcernIds, setSelectedConcernIds] = useState([]);
+  const [selectedComboIds, setSelectedComboIds] = useState([]);
   const [weight, setWeight] = useState('');
   const [imageUrl, setImageUrl] = useState('');
   const [secondaryImageUrl, setSecondaryImageUrl] = useState('');
@@ -155,26 +159,25 @@ const AdminProductForm = () => {
   const [suitableFor, setSuitableFor] = useState([]);
   const [newSuitableItem, setNewSuitableItem] = useState('');
 
-  // Combo Pack Contents States
-  const [comboItems, setComboItems] = useState([]);
-  const [newComboName, setNewComboName] = useState('');
-  const [newComboQty, setNewComboQty] = useState('');
-  const [newComboImage, setNewComboImage] = useState('');
-  const [uploadingCombo, setUploadingCombo] = useState(false);
-
   // Image Uploading States
   const [uploadingPrimary, setUploadingPrimary] = useState(false);
   const [uploadingSecondary, setUploadingSecondary] = useState(false);
   const [uploadingGallery, setUploadingGallery] = useState(false);
 
-  // Load categories and product details (if editing)
+  // Load categories, concerns, products list and product details (if editing)
   useEffect(() => {
     const loadData = async () => {
       setLoading(true);
       try {
-        // Fetch categories first
-        const catRes = await API.get('/products/categories');
+        // Fetch categories, concerns, and combos list first
+        const [catRes, conRes, comboRes] = await Promise.all([
+          API.get('/products/categories'),
+          API.get('/products/concerns'),
+          API.get('/products/combos')
+        ]);
         setCategories(catRes.data);
+        setConcerns(conRes.data);
+        setCombos(comboRes.data);
 
         // Fetch product if editing
         if (isEditMode) {
@@ -185,7 +188,9 @@ const AdminProductForm = () => {
           setSku(product.sku || '');
           setPrice(product.price || '');
           setComparePrice(product.compare_price || '');
-          setCategoryId(product.category_id || (product.category_ids && product.category_ids[0]) || '');
+          setSelectedCategoryIds(product.category_ids || (product.category_id ? [product.category_id] : []));
+          setSelectedConcernIds(product.concern_ids || (product.concern_id ? [product.concern_id] : []));
+          setSelectedComboIds(product.combo_ids || []);
           setWeight(product.weight || '');
           setImageUrl(product.image_url || '');
           setSecondaryImageUrl(product.secondary_image_url || '');
@@ -219,14 +224,13 @@ const AdminProductForm = () => {
           setFaqs(product.details?.faqs || []);
           setHighlights(product.details?.highlights || []);
           setSuitableFor(product.details?.suitable_for || []);
-          setComboItems(product.details?.combo_items || []);
           setMetaTitle(product.details?.meta_title || '');
           setMetaDescription(product.details?.meta_description || '');
           setMetaKeywords(product.details?.meta_keywords || '');
         }
       } catch (err) {
         console.error('Failed to load form initialization data:', err.message);
-        setFormError('Failed to load product or categories. Please try refreshing.');
+        setFormError('Failed to load product, categories or concerns. Please try refreshing.');
       } finally {
         setLoading(false);
       }
@@ -275,8 +279,8 @@ const AdminProductForm = () => {
 
   const handleSaveProduct = async (e) => {
     e.preventDefault();
-    if (!name.trim() || !description.trim() || !price || !categoryId) {
-      setFormError('Please fill out all required fields. Select a category.');
+    if (!name.trim() || !description.trim() || !price || selectedCategoryIds.length === 0) {
+      setFormError('Please fill out all required fields. Select at least one category.');
       return;
     }
 
@@ -288,8 +292,11 @@ const AdminProductForm = () => {
       description,
       price: parseFloat(price),
       compare_price: comparePrice ? parseFloat(comparePrice) : null,
-      category_id: parseInt(categoryId),
-      category_ids: [parseInt(categoryId)],
+      category_id: selectedCategoryIds[0] || null,
+      category_ids: selectedCategoryIds,
+      concern_id: selectedConcernIds[0] || null,
+      concern_ids: selectedConcernIds,
+      combo_ids: selectedComboIds,
       sku: sku.trim() || null,
       image_url: imageUrl,
       secondary_image_url: secondaryImageUrl || imageUrl,
@@ -305,7 +312,7 @@ const AdminProductForm = () => {
         faqs: faqs,
         highlights: highlights,
         suitable_for: suitableFor,
-        combo_items: comboItems,
+        combo_items: [],
         meta_title: metaTitle,
         meta_description: metaDescription,
         meta_keywords: metaKeywords
@@ -430,20 +437,109 @@ const AdminProductForm = () => {
             />
           </div>
 
-          {/* Category Selector */}
-          <div className="sm:col-span-2">
-            <label className="block text-[10px] font-bold text-brand-grey dark:text-zinc-400 uppercase tracking-wider mb-1">Category *</label>
-            <select
-              required
-              value={categoryId}
-              onChange={(e) => setCategoryId(e.target.value)}
-              className="w-full px-3 py-2 border border-brand-border dark:border-zinc-750 bg-white dark:bg-zinc-800 text-brand-dark dark:text-white rounded text-xs focus:outline-none focus:border-brand-blue font-semibold"
-            >
-              <option value="">Select a category</option>
-              {categories.map(c => (
-                <option key={c.id} value={c.id}>{c.name}</option>
-              ))}
-            </select>
+          {/* Categories Multi-Select Checklist */}
+          <div className="sm:col-span-2 space-y-2">
+            <label className="block text-[10px] font-bold text-brand-grey dark:text-zinc-400 uppercase tracking-wider">Categories *</label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 border border-brand-border dark:border-zinc-800 rounded bg-zinc-50/30 dark:bg-zinc-950/10">
+              {categories.map((c) => {
+                const isChecked = selectedCategoryIds.includes(c.id);
+                return (
+                  <label
+                    key={c.id}
+                    className={`flex items-center gap-2.5 p-3 rounded-lg border text-xs font-bold uppercase cursor-pointer select-none transition-all ${
+                      isChecked
+                        ? 'border-brand-blue bg-brand-blue-light/10 text-brand-blue dark:bg-brand-blue/10 dark:text-brand-blue-light'
+                        : 'border-brand-border dark:border-zinc-750 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-brand-dark dark:text-zinc-300'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => {
+                        if (isChecked) {
+                          setSelectedCategoryIds(prev => prev.filter(id => id !== c.id));
+                        } else {
+                          setSelectedCategoryIds(prev => [...prev, c.id]);
+                        }
+                      }}
+                      className="rounded text-brand-blue focus:ring-brand-blue w-4 h-4 cursor-pointer"
+                    />
+                    <span>{c.name}</span>
+                  </label>
+                );
+              })}
+            </div>
+            {selectedCategoryIds.length === 0 && (
+              <p className="text-[10px] text-red-500 font-bold">Please select at least one category.</p>
+            )}
+          </div>
+
+          {/* Concerns Multi-Select Checklist */}
+          <div className="sm:col-span-2 space-y-2">
+            <label className="block text-[10px] font-bold text-brand-grey dark:text-zinc-400 uppercase tracking-wider">Skin / Hair Concerns</label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 border border-brand-border dark:border-zinc-800 rounded bg-zinc-50/30 dark:bg-zinc-950/10">
+              {concerns.map((con) => {
+                const isChecked = selectedConcernIds.includes(con.id);
+                return (
+                  <label
+                    key={con.id}
+                    className={`flex items-center gap-2.5 p-3 rounded-lg border text-xs font-bold uppercase cursor-pointer select-none transition-all ${
+                      isChecked
+                        ? 'border-brand-blue bg-brand-blue-light/10 text-brand-blue dark:bg-brand-blue/10 dark:text-brand-blue-light'
+                        : 'border-brand-border dark:border-zinc-750 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-brand-dark dark:text-zinc-300'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => {
+                        if (isChecked) {
+                          setSelectedConcernIds(prev => prev.filter(id => id !== con.id));
+                        } else {
+                          setSelectedConcernIds(prev => [...prev, con.id]);
+                        }
+                      }}
+                      className="rounded text-brand-blue focus:ring-brand-blue w-4 h-4 cursor-pointer"
+                    />
+                    <span>{con.name}</span>
+                  </label>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* Combos Multi-Select Checklist */}
+          <div className="sm:col-span-2 space-y-2">
+            <label className="block text-[10px] font-bold text-brand-grey dark:text-zinc-400 uppercase tracking-wider">Combos & Kits</label>
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 p-4 border border-brand-border dark:border-zinc-800 rounded bg-zinc-50/30 dark:bg-zinc-950/10">
+              {combos.map((comb) => {
+                const isChecked = selectedComboIds.includes(comb.id);
+                return (
+                  <label
+                    key={comb.id}
+                    className={`flex items-center gap-2.5 p-3 rounded-lg border text-xs font-bold uppercase cursor-pointer select-none transition-all ${
+                      isChecked
+                        ? 'border-brand-blue bg-brand-blue-light/10 text-brand-blue dark:bg-brand-blue/10 dark:text-brand-blue-light'
+                        : 'border-brand-border dark:border-zinc-750 hover:bg-zinc-50 dark:hover:bg-zinc-800 text-brand-dark dark:text-zinc-300'
+                    }`}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => {
+                        if (isChecked) {
+                          setSelectedComboIds(prev => prev.filter(id => id !== comb.id));
+                        } else {
+                          setSelectedComboIds(prev => [...prev, comb.id]);
+                        }
+                      }}
+                      className="rounded text-brand-blue focus:ring-brand-blue w-4 h-4 cursor-pointer"
+                    />
+                    <span>{comb.name}</span>
+                  </label>
+                );
+              })}
+            </div>
           </div>
 
           {/* Badges Checklist */}
@@ -1097,124 +1193,7 @@ const AdminProductForm = () => {
                 </button>
               </div>
             </div>
-          </div>
-
-          {/* Combo Pack Contents */}
-          <div className="sm:col-span-2 border-t border-brand-border/40 dark:border-zinc-800 pt-6 space-y-4">
-            <div>
-              <label className="block text-[10px] font-bold text-brand-grey dark:text-zinc-400 uppercase tracking-wider">Combo Pack Contents</label>
-              <span className="text-[10px] text-brand-grey dark:text-zinc-500 font-semibold uppercase tracking-wider font-heading block mt-0.5">
-                If this product is a bundle or combo pack, define its contents (Item Name, Quantity/Size, and Image)
-              </span>
-            </div>
-
-            {/* Combo Items List */}
-            {comboItems.length > 0 ? (
-              <div className="space-y-3 max-w-xl">
-                {comboItems.map((item, idx) => (
-                  <div key={idx} className="flex items-center justify-between p-2.5 bg-[#f9fafb] dark:bg-zinc-850 border border-brand-border dark:border-zinc-800 rounded-lg text-xs font-medium">
-                    <div className="flex items-center gap-3">
-                      <div className="w-12 h-12 rounded border border-brand-border dark:border-zinc-700 bg-white dark:bg-zinc-900 flex items-center justify-center p-1 overflow-hidden shrink-0">
-                        {item.image_url ? (
-                          <img 
-                            src={getImageUrl(item.image_url)} 
-                            alt="" 
-                            className="max-h-full max-w-full object-contain rounded"
-                            onError={(e) => { e.target.src = '/assets/products/placeholder.png'; }}
-                          />
-                        ) : (
-                          <span className="text-[8px] text-brand-grey">No Image</span>
-                        )}
-                      </div>
-                      <div className="space-y-0.5">
-                        <span className="font-bold text-brand-dark dark:text-white uppercase">{item.name}</span>
-                        <p className="text-[11px] text-brand-grey dark:text-zinc-400 font-medium">Quantity/Size: {item.qty}</p>
-                      </div>
-                    </div>
-                    <button
-                      type="button"
-                      onClick={() => setComboItems(prev => prev.filter((_, i) => i !== idx))}
-                      className="p-1.5 text-brand-accent hover:bg-red-50 dark:hover:bg-red-950/20 rounded transition-colors"
-                      title="Delete combo item"
-                    >
-                      <Trash2 size={14} />
-                    </button>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <p className="text-[10px] text-brand-grey dark:text-zinc-500 font-semibold italic">No combo pack items defined.</p>
-            )}
-
-            {/* Inputs to Add Combo Item */}
-            <div className="grid grid-cols-1 sm:grid-cols-12 gap-3 items-end max-w-xl">
-              <div className="sm:col-span-5">
-                <label className="block text-[9px] font-bold text-brand-grey dark:text-zinc-550 uppercase mb-1">Item Name</label>
-                <input
-                  type="text"
-                  value={newComboName}
-                  onChange={(e) => setNewComboName(e.target.value)}
-                  className="w-full px-3 py-1.5 border border-brand-border dark:border-zinc-750 bg-white dark:bg-zinc-800 text-brand-dark dark:text-white rounded text-xs focus:outline-none focus:border-brand-blue"
-                  placeholder="e.g. Bye Bye Pigmentation Face Wash"
-                />
-              </div>
-              <div className="sm:col-span-3">
-                <label className="block text-[9px] font-bold text-brand-grey dark:text-zinc-550 uppercase mb-1">Qty / Size</label>
-                <input
-                  type="text"
-                  value={newComboQty}
-                  onChange={(e) => setNewComboQty(e.target.value)}
-                  className="w-full px-3 py-1.5 border border-brand-border dark:border-zinc-750 bg-white dark:bg-zinc-800 text-brand-dark dark:text-white rounded text-xs focus:outline-none focus:border-brand-blue"
-                  placeholder="e.g. 70g or 1 Unit"
-                />
-              </div>
-              <div className="sm:col-span-4">
-                <label className="block text-[9px] font-bold text-brand-grey dark:text-zinc-550 uppercase mb-1">Image URL</label>
-                <div className="flex gap-1.5">
-                  <input
-                    type="text"
-                    value={newComboImage}
-                    onChange={(e) => setNewComboImage(e.target.value)}
-                    className="flex-1 px-3 py-1.5 border border-brand-border dark:border-zinc-750 bg-white dark:bg-zinc-800 text-brand-dark dark:text-white rounded text-xs focus:outline-none focus:border-brand-blue"
-                    placeholder="Image URL or upload"
-                  />
-                  <label className="cursor-pointer shrink-0 flex items-center justify-center p-1.5 bg-brand-bg-grey dark:bg-zinc-800 hover:bg-brand-blue-light hover:text-brand-blue border border-brand-border dark:border-zinc-700 rounded text-xs transition-all text-brand-dark dark:text-zinc-200">
-                    {uploadingCombo ? <RefreshCw className="animate-spin" size={14} /> : <Upload size={14} />}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => {
-                        handleImageUpload(e, 'combo');
-                        e.target.value = null;
-                      }}
-                      className="hidden"
-                      disabled={uploadingCombo}
-                    />
-                  </label>
-                </div>
-              </div>
-              <div className="sm:col-span-12 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (newComboName.trim() && newComboQty.trim()) {
-                      setComboItems(prev => [...prev, {
-                        name: newComboName.trim(),
-                        qty: newComboQty.trim(),
-                        image_url: newComboImage.trim()
-                      }]);
-                      setNewComboName('');
-                      setNewComboQty('');
-                      setNewComboImage('');
-                    }
-                  }}
-                  className="px-6 py-1.5 bg-brand-blue hover:bg-brand-blue-dark text-white rounded font-bold text-xs cursor-pointer transition-colors"
-                >
-                  Add Combo Item
-                </button>
-              </div>
-            </div>
-          </div>
+        </div>
 
           {/* SEO & Metadata section */}
           <div className="sm:col-span-2 border-t border-brand-border/40 dark:border-zinc-800 pt-6 space-y-4">

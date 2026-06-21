@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { Link, Outlet, useNavigate, useLocation } from 'react-router-dom';
-import { LayoutDashboard, ShoppingBag, ClipboardList, Users, ShieldAlert, ArrowLeft, LogOut, Sun, Moon, Sliders, Tag, RefreshCw, MessageSquare, Sparkles, Image, Truck } from 'lucide-react';
+import { LayoutDashboard, ShoppingBag, ClipboardList, Users, ShieldAlert, ArrowLeft, LogOut, Sun, Moon, Sliders, Tag, RefreshCw, MessageSquare, Sparkles, Image, Truck, Boxes } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 import { useTheme } from '../context/ThemeContext';
 
@@ -98,6 +98,17 @@ const AdminLayout = () => {
               }`}
             >
               <Sparkles size={16} /> Concerns Catalog
+            </Link>
+
+            <Link
+              to="/combos"
+              className={`flex items-center gap-3 px-4 py-3 rounded text-xs font-bold uppercase tracking-wider font-heading transition-all ${
+                isActive('/combos') 
+                  ? 'bg-brand-blue text-white shadow-md' 
+                  : 'text-gray-300 hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              <Boxes size={16} /> Combos Catalog
             </Link>
 
             <Link
@@ -220,6 +231,7 @@ const AdminLayout = () => {
               <Link to="/products" className="text-brand-dark hover:text-brand-blue p-1.5 dark:text-zinc-300 dark:hover:text-white"><ShoppingBag size={18} /></Link>
               <Link to="/categories" className="text-brand-dark hover:text-brand-blue p-1.5 dark:text-zinc-300 dark:hover:text-white" title="Categories"><Sliders size={18} /></Link>
               <Link to="/concerns" className="text-brand-dark hover:text-brand-blue p-1.5 dark:text-zinc-300 dark:hover:text-white" title="Concerns"><Sparkles size={18} /></Link>
+              <Link to="/combos" className="text-brand-dark hover:text-brand-blue p-1.5 dark:text-zinc-300 dark:hover:text-white" title="Combos"><Boxes size={18} /></Link>
               <Link to="/orders" className="text-brand-dark hover:text-brand-blue p-1.5 dark:text-zinc-300 dark:hover:text-white"><ClipboardList size={18} /></Link>
               <Link to="/returns" className="text-brand-dark hover:text-brand-blue p-1.5 dark:text-zinc-300 dark:hover:text-white" title="Returns"><RefreshCw size={18} /></Link>
               <Link to="/users" className="text-brand-dark hover:text-brand-blue p-1.5 dark:text-zinc-300 dark:hover:text-white"><Users size={18} /></Link>
